@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp/wsl-desktop-$UID}/wsl-xfce-desktop"
+[[ -f "$runtime_dir/desktop.pid" ]] || { echo 'No managed desktop is running.'; exit 0; }
+desktop_pid="$(cat "$runtime_dir/desktop.pid")"
+[[ "$desktop_pid" =~ ^[0-9]+$ ]] || { echo 'Invalid PID record.' >&2; exit 1; }
+[[ -r "/proc/$desktop_pid/cmdline" ]] || { echo 'The recorded desktop has already stopped.'; exit 0; }
+[[ "$(ps -p "$desktop_pid" -o uid= | tr -d ' ')" == "$UID" ]] || {
+    echo 'Refusing to stop a process owned by another user.' >&2; exit 1;
+}
+tr '\0' '\n' <"/proc/$desktop_pid/cmdline" | grep -Fxq "$HOME/.local/bin/start-xfce-desktop" || {
+    echo 'PID does not belong to the installed launcher; refusing to stop it.' >&2; exit 1;
+}
+kill -TERM "$desktop_pid"
+for attempt in {1..50}; do
+    kill -0 "$desktop_pid" 2>/dev/null || exit 0
+    sleep 0.1
+done
+echo 'Desktop is still exiting. Inspect session.log before trying again.' >&2
+exit 1

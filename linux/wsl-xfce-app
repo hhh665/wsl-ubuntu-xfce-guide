@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ $# -gt 0 ]] || { echo 'Usage: wsl-xfce-app command [arguments...]' >&2; exit 2; }
+source "$HOME/.local/share/wsl-xfce/desktop-context.sh"
+load_desktop_context
+cd "$HOME"
+# Keep the Windows wsl.exe invocation alive for the application's lifetime.
+exec "$@"

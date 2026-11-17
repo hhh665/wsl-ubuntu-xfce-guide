@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+*.deb
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.bak
+config.json
+.venv/
+work/
